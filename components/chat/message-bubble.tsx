@@ -2,8 +2,8 @@
 
 import { UIMessage } from 'ai'
 import { cn } from '@/lib/utils'
-import { BrainCircuit, User, Wrench, ChevronDown, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { BrainCircuit, User } from 'lucide-react'
+import { MemoryTrace } from './memory-trace'
 
 interface MessageBubbleProps {
   message: UIMessage
@@ -24,55 +24,6 @@ type ToolPart = {
   state: string
   input?: Record<string, unknown>
   output?: unknown
-}
-
-function ToolCallPart({ part }: { part: ToolPart }) {
-  const [expanded, setExpanded] = useState(false)
-  const isDone = part.state === 'output-available' || part.state === 'output-error'
-  const isMemory = part.toolName === 'memory'
-
-  const inputCmd =
-    part.input && typeof part.input === 'object' && 'command' in part.input
-      ? String(part.input.command)
-      : part.toolName
-
-  return (
-    <button
-      onClick={() => setExpanded((e) => !e)}
-      className="w-full text-left"
-    >
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-cell-border bg-cell-surface text-xs font-mono text-muted-foreground hover:border-cell-accent/50 transition-colors">
-        <Wrench className="w-3 h-3 shrink-0 text-cell-accent" />
-        <span className="flex-1 truncate">
-          {isMemory ? `memory.${inputCmd}` : part.toolName}
-        </span>
-        <span
-          className={cn(
-            'px-1.5 py-0.5 rounded text-[10px]',
-            isDone
-              ? 'bg-cell-accent/10 text-cell-accent'
-              : 'bg-muted text-muted-foreground'
-          )}
-        >
-          {isDone ? 'done' : 'running'}
-        </span>
-        {expanded ? (
-          <ChevronDown className="w-3 h-3 shrink-0" />
-        ) : (
-          <ChevronRight className="w-3 h-3 shrink-0" />
-        )}
-      </div>
-      {expanded && (
-        <div className="mt-1 px-3 py-2 rounded-lg bg-cell-surface border border-cell-border text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all">
-          {isDone && part.output
-            ? typeof part.output === 'object'
-              ? JSON.stringify(part.output, null, 2)
-              : String(part.output)
-            : JSON.stringify(part.input, null, 2)}
-        </div>
-      )}
-    </button>
-  )
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
@@ -106,22 +57,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         )}
       </div>
 
-      {/* Bubble */}
+      {/* Bubble + trace */}
       <div
         className={cn(
           'flex flex-col gap-2 max-w-[80%]',
           isUser ? 'items-end' : 'items-start'
         )}
       >
-        {/* Tool calls (assistant only) */}
-        {!isUser && toolParts.length > 0 && (
-          <div className="flex flex-col gap-1 w-full">
-            {toolParts.map((part) => (
-              <ToolCallPart key={part.toolInvocationId} part={part} />
-            ))}
-          </div>
-        )}
-
         {/* Text */}
         {text && (
           <div
@@ -135,7 +77,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             <p className="whitespace-pre-wrap break-words">{text}</p>
           </div>
         )}
+
+        {/* Memory trace (assistant only) */}
+        {!isUser && toolParts.length > 0 && (
+          <MemoryTrace toolParts={toolParts} />
+        )}
       </div>
     </div>
   )
 }
+
