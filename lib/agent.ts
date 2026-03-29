@@ -1,5 +1,5 @@
 import { ToolLoopAgent } from 'ai'
-import { MongoMemoryStore, buildMemoryTool } from './lib/memory'
+import { MongoMemoryStore, buildMemoryTool } from '@/lib/memory'
 
 export function buildMemoryAgent(store: MongoMemoryStore) {
   return new ToolLoopAgent({
