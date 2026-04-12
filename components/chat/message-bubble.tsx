@@ -34,6 +34,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     (p): p is ToolPart => p.type === 'tool-invocation'
   )
 
+  if (!isUser) {
+    console.log('[v0] assistant message parts:', JSON.stringify(message.parts?.map(p => ({ type: p.type, ...(p as Record<string,unknown>) })), null, 2))
+    console.log('[v0] toolParts found:', toolParts.length)
+  }
+
   return (
     <div
       className={cn(

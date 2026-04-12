@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, Trash2, RefreshCw, List } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type ToolPart = {
@@ -18,14 +18,14 @@ interface MemoryTraceProps {
 }
 
 const COMMAND_META: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  save_core:       { icon: Database,   label: 'Saved core',       color: 'text-emerald-400' },
-  read_core:       { icon: BookOpen,   label: 'Read core',        color: 'text-sky-400' },
-  save_note:       { icon: FilePlus,   label: 'Saved note',       color: 'text-emerald-400' },
-  search_notes:    { icon: Search,     label: 'Searched notes',   color: 'text-amber-400' },
-  search_history:  { icon: Search,     label: 'Searched history', color: 'text-amber-400' },
-  list_notes:      { icon: List,       label: 'Listed notes',     color: 'text-sky-400' },
-  delete_note:     { icon: Trash2,     label: 'Deleted note',     color: 'text-rose-400' },
-  update_note:     { icon: RefreshCw,  label: 'Updated note',     color: 'text-amber-400' },
+  // Actual command names from tool.ts
+  core_read:            { icon: BookOpen,  label: 'Read core',         color: 'text-sky-400' },
+  core_update:          { icon: Database,  label: 'Updated core',      color: 'text-emerald-400' },
+  core_append:          { icon: Database,  label: 'Appended to core',  color: 'text-emerald-400' },
+  note_add:             { icon: FilePlus,  label: 'Saved note',        color: 'text-emerald-400' },
+  note_search:          { icon: Search,    label: 'Searched notes',    color: 'text-amber-400' },
+  conversation_search:  { icon: Search,    label: 'Searched history',  color: 'text-amber-400' },
+  conversation_recent:  { icon: List,      label: 'Recent history',    color: 'text-sky-400' },
 }
 
 function getCommandMeta(part: ToolPart) {
