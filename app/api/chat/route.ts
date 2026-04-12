@@ -4,7 +4,17 @@ import clientPromise from '@/lib/mongodb'
 
 function buildMemoryAgent(store: MongoMemoryStore) {
   return new ToolLoopAgent({
-    model: 'google/gemini-2.5-flash',
+    model: 'google/gemini-3.1-flash-lite-preview',
+    callOptions: {
+      providerOptions: {
+        google: {
+          thinkingConfig: {
+            thinkingBudget: 8000,
+            includeThoughts: false, // keep thoughts server-side, don't stream to client
+          },
+        },
+      },
+    },
     tools: { memory: buildMemoryTool(store) },
     prepareCall: async (settings) => {
       const coreMemory = await store.readCore()
