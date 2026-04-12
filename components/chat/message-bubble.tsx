@@ -17,13 +17,15 @@ function getTextFromParts(message: UIMessage): string {
     .join('')
 }
 
-type ToolPart = {
-  type: 'tool-invocation'
-  toolInvocationId: string
-  toolName: string
-  state: string
+// AI SDK names tool parts as "tool-{toolName}", so our "memory" tool → "tool-memory"
+export type ToolPart = {
+  type: string // e.g. "tool-memory"
+  toolCallId: string
+  state: 'output-available' | 'output-error' | 'input-streaming' | 'input-available' | string
   input?: Record<string, unknown>
+  rawInput?: Record<string, unknown>
   output?: unknown
+  errorText?: string
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
@@ -31,13 +33,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const text = getTextFromParts(message)
 
   const toolParts = (message.parts ?? []).filter(
-    (p): p is ToolPart => p.type === 'tool-invocation'
+    (p): p is ToolPart => typeof p.type === 'string' && p.type.startsWith('tool-')
   )
-
-  if (!isUser) {
-    console.log('[v0] assistant message parts:', JSON.stringify(message.parts?.map(p => ({ type: p.type, ...(p as Record<string,unknown>) })), null, 2))
-    console.log('[v0] toolParts found:', toolParts.length)
-  }
 
   return (
     <div

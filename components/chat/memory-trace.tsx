@@ -1,17 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-type ToolPart = {
-  type: 'tool-invocation'
-  toolInvocationId: string
-  toolName: string
-  state: string
-  input?: Record<string, unknown>
-  output?: unknown
-}
+import type { ToolPart } from './message-bubble'
 
 interface MemoryTraceProps {
   toolParts: ToolPart[]
@@ -28,15 +20,23 @@ const COMMAND_META: Record<string, { icon: React.ElementType; label: string; col
   conversation_recent:  { icon: List,      label: 'Recent history',    color: 'text-sky-400' },
 }
 
-function getCommandMeta(part: ToolPart) {
-  const cmd =
-    part.input && typeof part.input === 'object' && 'command' in part.input
-      ? String(part.input.command)
-      : ''
-  return COMMAND_META[cmd] ?? { icon: Database, label: cmd || part.toolName, color: 'text-muted-foreground' }
+function getEffectiveInput(part: ToolPart): Record<string, unknown> {
+  return part.input ?? part.rawInput ?? {}
 }
 
-function outputSummary(output: unknown): string {
+function getCommandMeta(part: ToolPart) {
+  const inp = getEffectiveInput(part)
+  const cmd = 'command' in inp ? String(inp.command) : ''
+  return COMMAND_META[cmd] ?? { icon: Database, label: cmd || part.type.replace('tool-', ''), color: 'text-muted-foreground' }
+}
+
+function outputSummary(part: ToolPart): string {
+  if (part.state === 'output-error') {
+    // Extract just the first line of the error, not the full Zod dump
+    const msg = part.errorText ?? 'error'
+    return msg.split('\n')[0].replace('Invalid input for tool memory: ', '').slice(0, 80)
+  }
+  const output = part.output
   if (!output) return '—'
   if (typeof output === 'string') {
     const s = output.trim()
@@ -44,11 +44,12 @@ function outputSummary(output: unknown): string {
   }
   if (typeof output === 'object') {
     const o = output as Record<string, unknown>
+    if ('output' in o && typeof o.output === 'string') {
+      const s = o.output.trim()
+      return s.length > 80 ? s.slice(0, 80) + '…' : s
+    }
     if ('results' in o && Array.isArray(o.results)) return `${o.results.length} result(s)`
-    if ('saved' in o) return 'saved'
-    if ('deleted' in o) return 'deleted'
-    if ('updated' in o) return 'updated'
-    return JSON.stringify(output).slice(0, 60)
+    return JSON.stringify(output).slice(0, 80)
   }
   return String(output)
 }
@@ -97,22 +98,29 @@ export function MemoryTrace({ toolParts }: MemoryTraceProps) {
       {/* Expanded detail table */}
       {open && (
         <div className="mt-2 border-l-2 border-cell-border pl-4 flex flex-col gap-0.5">
-          {toolParts.map((part) => {
+          {toolParts.map((part, i) => {
             const meta = getCommandMeta(part)
             const Icon = meta.icon
-            const isDone = part.state === 'output-available' || part.state === 'output-error'
-            const summary = isDone ? outputSummary(part.output) : 'running…'
+            const isError = part.state === 'output-error'
+            const isDone = part.state === 'output-available' || isError
+            const summary = isDone ? outputSummary(part) : 'running…'
 
             return (
               <div
-                key={part.toolInvocationId}
+                key={part.toolCallId ?? i}
                 className="flex items-center justify-between gap-4 py-1"
               >
-                <span className={cn('flex items-center gap-1.5 text-[11px] font-mono shrink-0', meta.color)}>
-                  <Icon className="w-3 h-3" />
+                <span className={cn(
+                  'flex items-center gap-1.5 text-[11px] font-mono shrink-0',
+                  isError ? 'text-rose-400' : meta.color
+                )}>
+                  {isError ? <AlertCircle className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
                   {meta.label}
                 </span>
-                <span className="text-[11px] font-mono text-muted-foreground text-right truncate max-w-[200px]">
+                <span className={cn(
+                  'text-[11px] font-mono text-right truncate max-w-[220px]',
+                  isError ? 'text-rose-400/70' : 'text-muted-foreground'
+                )}>
                   {summary}
                 </span>
               </div>
