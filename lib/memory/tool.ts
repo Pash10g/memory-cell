@@ -2,33 +2,56 @@ import { tool } from 'ai'
 import { z } from 'zod'
 import { MongoMemoryStore } from './store'
 
-const commandSchema = z.discriminatedUnion('command', [
-  z.object({ command: z.literal('core_read') }),
-  z.object({ command: z.literal('core_update'), content: z.string() }),
-  z.object({ command: z.literal('core_append'), text: z.string() }),
-  z.object({
-    command: z.literal('note_add'),
-    content: z.string(),
-    tags: z.array(z.string()).optional(),
-  }),
-  z.object({ command: z.literal('note_search'), query: z.string() }),
-  z.object({
-    command: z.literal('conversation_search'),
-    query: z.string(),
-  }),
-  z.object({ command: z.literal('conversation_recent') }),
-])
+// Flat schema — Gemini does not reliably handle discriminatedUnion.
+// We use a single object with an enum command and nullable optional fields,
+// then enforce per-command requirements manually in execute().
+const commandSchema = z.object({
+  command: z.enum([
+    'core_read',
+    'core_update',
+    'core_append',
+    'note_add',
+    'note_search',
+    'conversation_search',
+    'conversation_recent',
+  ]).describe(
+    'The memory operation to perform. Always include this field.'
+  ),
+  // core_update: full replacement content
+  content: z.string().nullable().optional().describe(
+    'For core_update and note_add: the text content to save.'
+  ),
+  // core_append: text to append
+  text: z.string().nullable().optional().describe(
+    'For core_append: the text to append to core memory.'
+  ),
+  // note_add: optional tags
+  tags: z.array(z.string()).nullable().optional().describe(
+    'For note_add: optional list of tags.'
+  ),
+  // note_search / conversation_search: semantic query
+  query: z.string().nullable().optional().describe(
+    'For note_search and conversation_search: the search query string.'
+  ),
+})
 
 export function buildMemoryTool(store: MongoMemoryStore) {
   return tool({
-    description: `Read and write long-term memory backed by MongoDB.
+    description: `Read and write long-term persistent memory backed by MongoDB + Voyage AI embeddings.
+
+Commands:
+- core_read            → Read all stored facts about the user (no extra fields needed)
+- core_update {content}→ Replace core memory with new content
+- core_append {text}   → Append a new fact to core memory
+- note_add {content, tags?} → Save a detailed note with optional tags
+- note_search {query}  → Semantic search over saved notes
+- conversation_search {query} → Semantic search over past conversations
+- conversation_recent  → Fetch the 40 most recent conversation turns
 
 Rules:
-- Search before answering questions that might depend on past context.
-- Store durable user facts via core_append or core_update. Keep core memory short.
-- Store detailed notes via note_add.
-- Search conversations via conversation_search when the user references past interactions.
-- Never expose memory operations in user-facing replies.`,
+- Always call core_read at the start of a session before answering user questions.
+- Use core_append to save new durable user facts (name, preferences, etc.).
+- Never expose memory operations in your replies to the user.`,
     inputSchema: commandSchema,
     execute: async (input) => {
       try {
@@ -38,19 +61,26 @@ Rules:
             return { output: content || '(empty)' }
           }
           case 'core_update': {
-            await store.updateCore(input.content)
+            const content = input.content ?? ''
+            await store.updateCore(content)
             return { output: 'Core memory updated.' }
           }
           case 'core_append': {
-            await store.appendToCore(input.text)
+            const text = input.text ?? input.content ?? ''
+            if (!text) return { output: 'Nothing to append.' }
+            await store.appendToCore(text)
             return { output: 'Appended to core memory.' }
           }
           case 'note_add': {
-            await store.addNote(input.content, input.tags ?? [])
+            const content = input.content ?? input.text ?? ''
+            if (!content) return { output: 'Note content is empty.' }
+            await store.addNote(content, input.tags ?? [])
             return { output: 'Note saved.' }
           }
           case 'note_search': {
-            const notes = await store.searchNotes(input.query)
+            const query = input.query ?? ''
+            if (!query) return { output: 'No query provided.' }
+            const notes = await store.searchNotes(query)
             if (notes.length === 0) return { output: 'No relevant notes found.' }
             const formatted = notes
               .map((n, i) => `[${i + 1}] ${n.content}${n.tags?.length ? ` (tags: ${n.tags.join(', ')})` : ''}`)
@@ -58,7 +88,9 @@ Rules:
             return { output: formatted }
           }
           case 'conversation_search': {
-            const entries = await store.searchConversations(input.query)
+            const query = input.query ?? ''
+            if (!query) return { output: 'No query provided.' }
+            const entries = await store.searchConversations(query)
             if (entries.length === 0) return { output: 'No relevant past conversations found.' }
             const formatted = entries
               .map((e) => `[${e.role}] ${e.content}`)
@@ -68,7 +100,6 @@ Rules:
           case 'conversation_recent': {
             const entries = await store.recentConversations(40)
             if (entries.length === 0) return { output: 'No conversation history.' }
-            // Reverse to chronological order for the agent
             const formatted = [...entries]
               .reverse()
               .map((e) => `[${e.role}] ${e.content}`)
