@@ -1,5 +1,5 @@
 {
-  "name": "my-project",
+  "name": "memory-cell",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,10 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "ai": "^6.0.0",
+    "@ai-sdk/react": "^3.0.0",
+    "mongodb": "^6.12.0",
+    "voyageai": "^0.0.5",
     "@hookform/resolvers": "^3.9.1",
     "@vercel/analytics": "1.6.1",
     "@radix-ui/react-accordion": "1.2.12",
