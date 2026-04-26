@@ -1,41 +1,52 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List, AlertCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List, AlertCircle, Clock, Zap, StickyNote } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ToolPart } from './message-bubble'
+import type { ToolUIPart } from './message-bubble'
 
 interface MemoryTraceProps {
-  toolParts: ToolPart[]
+  toolParts: ToolUIPart[]
 }
 
 const COMMAND_META: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  // Actual command names from tool.ts
-  core_read:            { icon: BookOpen,  label: 'Read core',         color: 'text-sky-400' },
-  core_update:          { icon: Database,  label: 'Updated core',      color: 'text-emerald-400' },
-  core_append:          { icon: Database,  label: 'Appended to core',  color: 'text-emerald-400' },
-  note_add:             { icon: FilePlus,  label: 'Saved note',        color: 'text-emerald-400' },
-  note_search:          { icon: Search,    label: 'Searched notes',    color: 'text-amber-400' },
-  conversation_search:  { icon: Search,    label: 'Searched history',  color: 'text-amber-400' },
-  conversation_recent:  { icon: List,      label: 'Recent history',    color: 'text-sky-400' },
+  // Session memory
+  session_append:       { icon: Clock,     label: 'Saved turn',          color: 'text-sky-400' },
+  session_recent:       { icon: List,      label: 'Recent session',      color: 'text-sky-400' },
+  // Semantic memory
+  semantic_save:        { icon: Database,  label: 'Saved fact',          color: 'text-emerald-400' },
+  semantic_search:      { icon: Search,    label: 'Searched facts',      color: 'text-amber-400' },
+  // Procedural memory
+  procedural_save:      { icon: FilePlus,  label: 'Saved procedure',     color: 'text-emerald-400' },
+  procedural_search:    { icon: Search,    label: 'Searched procedures', color: 'text-amber-400' },
+  // Episodic memory
+  episodic_save:        { icon: BookOpen,  label: 'Saved episode',       color: 'text-purple-400' },
+  episodic_search:      { icon: Search,    label: 'Searched episodes',   color: 'text-amber-400' },
+  // Scratchpad
+  scratchpad_write:     { icon: StickyNote, label: 'Scratch note',       color: 'text-yellow-400' },
+  scratchpad_read:      { icon: StickyNote, label: 'Read scratch',       color: 'text-yellow-400' },
+  scratchpad_promote:   { icon: Zap,       label: 'Promoted note',       color: 'text-purple-400' },
 }
 
-function getEffectiveInput(part: ToolPart): Record<string, unknown> {
-  return part.input ?? part.rawInput ?? {}
+function getEffectiveInput(part: ToolUIPart): Record<string, unknown> {
+  if (part.state === 'input-available' || part.state === 'output-available' || part.state === 'output-error') {
+    return (part.input as Record<string, unknown>) ?? {}
+  }
+  return {}
 }
 
-function getCommandMeta(part: ToolPart) {
+function getCommandMeta(part: ToolUIPart) {
   const inp = getEffectiveInput(part)
   const cmd = 'command' in inp ? String(inp.command) : ''
   return COMMAND_META[cmd] ?? { icon: Database, label: cmd || part.type.replace('tool-', ''), color: 'text-muted-foreground' }
 }
 
-function outputSummary(part: ToolPart): string {
+function outputSummary(part: ToolUIPart): string {
   if (part.state === 'output-error') {
-    // Extract just the first line of the error, not the full Zod dump
     const msg = part.errorText ?? 'error'
     return msg.split('\n')[0].replace('Invalid input for tool memory: ', '').slice(0, 80)
   }
+  if (part.state !== 'output-available') return 'running…'
   const output = part.output
   if (!output) return '—'
   if (typeof output === 'string') {
@@ -59,7 +70,6 @@ export function MemoryTrace({ toolParts }: MemoryTraceProps) {
 
   if (toolParts.length === 0) return null
 
-  // Deduplicate icon strip — show unique commands in call order
   const icons = toolParts.map((p) => getCommandMeta(p))
   const totalOps = toolParts.length
 

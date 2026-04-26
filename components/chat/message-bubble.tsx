@@ -1,6 +1,6 @@
 'use client'
 
-import { UIMessage } from 'ai'
+import { UIMessage, ToolUIPart } from 'ai'
 import { cn } from '@/lib/utils'
 import { BrainCircuit, User } from 'lucide-react'
 import { MemoryTrace } from './memory-trace'
@@ -11,30 +11,24 @@ interface MessageBubbleProps {
 
 function getTextFromParts(message: UIMessage): string {
   if (!message.parts || !Array.isArray(message.parts)) return ''
-  return message.parts
-    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-    .map((p) => p.text)
-    .join('')
+  // Use only the LAST text part to avoid duplicates across multi-step ToolLoopAgent turns
+  const textParts = message.parts.filter(
+    (p): p is { type: 'text'; text: string } => p.type === 'text'
+  )
+  if (textParts.length === 0) return ''
+  return textParts[textParts.length - 1].text
 }
 
-// AI SDK names tool parts as "tool-{toolName}", so our "memory" tool → "tool-memory"
-export type ToolPart = {
-  type: string // e.g. "tool-memory"
-  toolCallId: string
-  state: 'output-available' | 'output-error' | 'input-streaming' | 'input-available' | string
-  input?: Record<string, unknown>
-  rawInput?: Record<string, unknown>
-  output?: unknown
-  errorText?: string
-}
+// Re-export the SDK's ToolUIPart so memory-trace.tsx can import from here
+export type { ToolUIPart }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const text = getTextFromParts(message)
 
   const toolParts = (message.parts ?? []).filter(
-    (p): p is ToolPart => typeof p.type === 'string' && p.type.startsWith('tool-')
-  )
+    (p): p is ToolUIPart => typeof p.type === 'string' && p.type.startsWith('tool-')
+  ) as ToolUIPart[]
 
   return (
     <div

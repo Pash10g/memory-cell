@@ -1,100 +1,68 @@
 import { createAgentUIStreamResponse, ToolLoopAgent } from 'ai'
-import { MongoMemoryStore, buildMemoryTool } from '@/lib/memory'
-import clientPromise from '@/lib/mongodb'
+import { createMongoDBMemory } from '@mongodb-developer/vercel-ai-memory'
+import { voyage } from 'voyage-ai-provider'
 
-function buildMemoryAgent(store: MongoMemoryStore) {
-  return new ToolLoopAgent({
+if (!process.env.MONGODB_URI) {
+  throw new Error('MONGODB_URI environment variable is not set')
+}
+
+// Module-level singleton — `createMongoDBMemory` manages its own MongoClient
+// and bootstraps lazily on first tool use. Safe across hot-reloads in dev.
+const mongodbMemory = createMongoDBMemory({
+  uri: process.env.MONGODB_URI,
+  embedder: voyage.textEmbeddingModel('voyage-3.5'),
+  dbName: 'memory_cell_app', // optional, defaults to 'agent_memory'
+})
+
+export async function POST(req: Request) {
+  const body = await req.json()
+  const { messages } = body
+
+  // Support optional per-user/per-session scoping from the client.
+  // Falls back to 'default' for single-user deployments.
+  const userId: string = body.userId ?? 'default'
+  const sessionId: string = body.sessionId ?? 'default'
+
+  const agent = new ToolLoopAgent({
     model: 'google/gemini-3.1-flash-lite-preview',
-    callOptions: {
-      providerOptions: {
-        google: {
-          thinkingConfig: {
-            thinkingBudget: 8000,
-            includeThoughts: false, // keep thoughts server-side, don't stream to client
-          },
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 8000,
+          includeThoughts: false,
         },
       },
     },
-    tools: { memory: buildMemoryTool(store) },
-    prepareCall: async (settings) => {
-      const coreMemory = await store.readCore()
-      return {
-        ...settings,
-        instructions: `Today is ${new Date().toISOString().slice(0, 10)}.
+    tools: mongodbMemory({ userId, sessionId }),
+    prepareCall: async (settings) => ({
+      ...settings,
+      instructions: `Today is ${new Date().toISOString().slice(0, 10)}.
 
 You are MemoryCell — an AI assistant with persistent long-term memory backed by MongoDB.
 
-Core memory (always up-to-date facts about this user):
-${coreMemory || '(no core memory stored yet)'}
+At the start of each conversation:
+1. Call memory with session_recent to restore recent conversation context.
+2. Call memory with semantic_search to recall relevant facts about the user.
+
+Memory operations available to you:
+- session_append / session_recent  → save and restore conversation turns
+- semantic_save / semantic_search  → store and recall facts about people, entities, and user preferences
+- procedural_save / procedural_search → store and recall how-to knowledge and workflows
+- episodic_save / episodic_search   → record and recall significant events and outcomes
+- scratchpad_write / scratchpad_read / scratchpad_promote → temporary working notes
 
 Instructions:
-- Before answering anything contextual, search your memory first.
-- Proactively save important user facts to core memory (keep it concise).
-- Save detailed information as notes.
-- When the user references something from the past, search conversation history.
-- Never mention the memory system or its operations to the user.
+- Always search memory before answering questions that reference past context.
+- Proactively save important user facts with semantic_save (name, preferences, goals, etc.).
+- Save significant events or outcomes with episodic_save.
+- Use scratchpad_write for temporary working notes during multi-step tasks.
+- Never expose memory operations or the memory system in your replies to the user.
 - Respond naturally and helpfully.`,
-      }
-    },
+    }),
   })
-}
 
-// Cache store per-process (not per-request) so bootstrap runs once
-let storeCache: MongoMemoryStore | null = null
-
-async function getStore(): Promise<MongoMemoryStore> {
-  if (storeCache) return storeCache
-  const client = await clientPromise
-  const store = new MongoMemoryStore(client)
-  await store.bootstrap()
-  storeCache = store
-  return store
-}
-
-export async function POST(req: Request) {
-  const { messages } = await req.json()
-
-  const store = await getStore()
-
-  // Persist the latest user message to conversation memory
-  const lastMsg = messages[messages.length - 1]
-  if (lastMsg?.role === 'user') {
-    const text =
-      lastMsg.parts
-        ?.filter((p: { type: string }) => p.type === 'text')
-        .map((p: { type: string; text: string }) => p.text)
-        .join('') ?? lastMsg.content ?? ''
-
-    if (text) {
-      // Fire-and-forget — don't block the response
-      store.appendConversation({ role: 'user', content: text }).catch(() => {})
-    }
-  }
-
-  const agent = buildMemoryAgent(store)
-
-  const response = createAgentUIStreamResponse({
+  return createAgentUIStreamResponse({
     agent,
     uiMessages: messages,
-    onFinish: async ({ messages: finalMessages }) => {
-      // Persist the assistant reply
-      const assistantMsg = [...finalMessages].reverse().find(
-        (m) => m.role === 'assistant'
-      )
-      if (assistantMsg) {
-        const text =
-          assistantMsg.parts
-            ?.filter((p: { type: string }) => p.type === 'text')
-            .map((p: { type: string; text: string }) => p.text)
-            .join('') ?? ''
-        if (text) {
-          store
-            .appendConversation({ role: 'assistant', content: text })
-            .catch(() => {})
-        }
-      }
-    },
   })
-
-  return response
 }
