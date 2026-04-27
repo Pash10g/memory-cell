@@ -14,6 +14,52 @@ function newSessionId() {
     : `session-${Date.now()}`
 }
 
+// ─── Session persistence helpers ───────────────────────────────────────────────
+// We store a single "current sessionId" per userId in localStorage so the same
+// thread is reused across page reloads / remounts. Without this, every reload
+// generates a fresh sessionId and each subsequent user turn ends up in a new
+// sidebar thread — sessions should be grouped by sessionId, not per response.
+const SESSION_KEY_PREFIX = 'memory-cell:currentSessionId:'
+const USER_KEY = 'memory-cell:currentUser'
+
+function loadStoredUser(): string {
+  if (typeof window === 'undefined') return 'default'
+  return window.localStorage.getItem(USER_KEY) || 'default'
+}
+
+function storeUser(userId: string) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(USER_KEY, userId)
+  } catch {
+    /* quota / privacy mode — ignore */
+  }
+}
+
+function loadOrCreateSessionId(userId: string): string {
+  if (typeof window === 'undefined') return newSessionId()
+  const key = SESSION_KEY_PREFIX + userId
+  const existing = window.localStorage.getItem(key)
+  if (existing) return existing
+  const fresh = newSessionId()
+  try {
+    window.localStorage.setItem(key, fresh)
+  } catch {
+    /* ignore */
+  }
+  return fresh
+}
+
+function storeSessionId(userId: string, sessionId: string) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(SESSION_KEY_PREFIX + userId, sessionId)
+  } catch {
+    /* ignore */
+  }
+}
+
+
 // ─── Inner component: owns useChat scoped to the current sessionId ─────────────
 // key={sessionId} on this component forces a fresh useChat whenever session changes
 function ChatSession({
@@ -66,19 +112,46 @@ export function ChatInterface() {
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([])
   const [sidebarKey, setSidebarKey] = useState(0)
 
+  // Hydrate from localStorage on first client render. This pins both the user
+  // and the "current sessionId" so page reloads resume the same thread instead
+  // of spawning a new one per reload (which is why the sidebar was showing a
+  // separate entry for each turn).
   useEffect(() => {
-    setSessionId(newSessionId())
+    const storedUser = loadStoredUser()
+    const sid = loadOrCreateSessionId(storedUser)
+    setUserId(storedUser)
+    setSessionId(sid)
+    // Pre-load any already-persisted messages for that session so a reload of
+    // an in-progress conversation shows the full history.
+    ;(async () => {
+      try {
+        const res = await fetch(
+          `/api/sessions/${encodeURIComponent(sid)}/messages?userId=${encodeURIComponent(storedUser)}`
+        )
+        if (res.ok) {
+          const msgs = await res.json()
+          if (Array.isArray(msgs) && msgs.length > 0) setInitialMessages(msgs)
+        }
+      } catch {
+        /* ignore — empty thread */
+      }
+    })()
   }, [])
 
   const handleNewSession = useCallback(() => {
+    const fresh = newSessionId()
     setInitialMessages([])
-    setSessionId(newSessionId())
-  }, [])
+    setSessionId(fresh)
+    storeSessionId(userId, fresh)
+    setSidebarKey((k) => k + 1)
+  }, [userId])
 
   const handleUserChange = useCallback((newUser: string) => {
     setUserId(newUser)
+    storeUser(newUser)
     setInitialMessages([])
-    setSessionId(newSessionId())
+    const sid = loadOrCreateSessionId(newUser)
+    setSessionId(sid)
     setSidebarKey((k) => k + 1)
   }, [])
 
@@ -100,9 +173,11 @@ export function ChatInterface() {
       }
       // Change sessionId AFTER messages are loaded — triggers ChatSession remount
       setSessionId(selectedId)
+      storeSessionId(userId, selectedId)
     },
     [userId]
   )
+
 
   const handleSidebarRefresh = useCallback(() => {
     setSidebarKey((k) => k + 1)
