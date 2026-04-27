@@ -39,7 +39,15 @@ export function ChatHeader({ userId, sessionId, onUserChange, onNewSession }: Ch
             MemoryCell
           </p>
           <p className="text-[10px] text-muted-foreground font-mono">
-            Gemini 2.5 Flash &bull; MongoDB Atlas &bull; Voyage AI
+            Powered by{' '}
+            <a
+              href="https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-cell-accent hover:underline"
+            >
+              @mongodb-developer/vercel-ai-memory
+            </a>
           </p>
         </div>
       </div>

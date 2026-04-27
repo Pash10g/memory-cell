@@ -1,6 +1,8 @@
-# MemoryCell — AI Chat with Persistent MongoDB Memory
+# MemoryCell — AI Chat with Persistent Memory
 
-An AI chat assistant with **persistent long-term memory** powered by [MongoDB Atlas](https://www.mongodb.com/atlas) and the [Vercel AI SDK](https://sdk.vercel.ai). MemoryCell remembers facts, past conversations, and user preferences across sessions — just like a real assistant would.
+An AI chat assistant with **persistent long-term memory**, built on top of the [**`@mongodb-developer/vercel-ai-memory`**](https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory) package and the [Vercel AI SDK](https://sdk.vercel.ai). MemoryCell remembers facts, past conversations, and user preferences across sessions — just like a real assistant would.
+
+> 📦 Powered by [`@mongodb-developer/vercel-ai-memory`](https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory) — a drop-in memory toolkit for Vercel AI SDK agents.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FPash10g%2Fmemory-cell&env=MONGODB_URI,VOYAGE_API_KEY,AI_GATEWAY_API_KEY&envDescription=Required%20API%20keys%20for%20MemoryCell&envLink=https%3A%2F%2Fgithub.com%2FPash10g%2Fmemory-cell%23environment-variables&project-name=memory-cell&repository-name=memory-cell)
 
@@ -8,7 +10,7 @@ An AI chat assistant with **persistent long-term memory** powered by [MongoDB At
 
 ## Features
 
-- 🧠 **Persistent memory** — semantic, episodic, procedural, and session memory layers backed by MongoDB Atlas Vector Search
+- 🧠 **Persistent memory** — semantic, episodic, procedural, and session memory layers, provided by [`@mongodb-developer/vercel-ai-memory`](https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory)
 - 💬 **Multi-session chat** — browse and resume past conversations from the sidebar
 - ⚡ **Streaming responses** — real-time token streaming via Vercel AI Gateway
 - 🔍 **Memory trace** — see which memories the AI recalled for each response
@@ -16,7 +18,7 @@ An AI chat assistant with **persistent long-term memory** powered by [MongoDB At
 
 ## How It Works
 
-MemoryCell uses [`@mongodb-developer/vercel-ai-memory`](https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory) to give the AI agent a set of memory tools backed by MongoDB Atlas:
+MemoryCell is a showcase for the [**`@mongodb-developer/vercel-ai-memory`**](https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory) package, which provides ready-made memory tools for any [Vercel AI SDK](https://sdk.vercel.ai) agent. The package exposes the following tools to the LLM:
 
 | Memory Type | Description |
 |---|---|
@@ -78,9 +80,9 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ## Tech Stack
 
+- [**`@mongodb-developer/vercel-ai-memory`**](https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory) — the memory engine at the heart of MemoryCell
 - [Next.js 16](https://nextjs.org) — React framework
 - [Vercel AI SDK](https://sdk.vercel.ai) — AI streaming & agent tools
-- [MongoDB Atlas](https://www.mongodb.com/atlas) — Persistent memory storage & vector search
-- [`@mongodb-developer/vercel-ai-memory`](https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory) — Memory abstraction layer
 - [Voyage AI](https://www.voyageai.com) — Text embeddings
+- [MongoDB Atlas](https://www.mongodb.com/atlas) — storage backend used by `@mongodb-developer/vercel-ai-memory`
 - [Tailwind CSS](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) — UI components

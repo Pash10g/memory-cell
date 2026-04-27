@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'MemoryCell',
   description:
-    'An AI assistant with persistent long-term memory backed by MongoDB Atlas and Voyage AI embeddings.',
+    'An AI assistant with persistent long-term memory, powered by the @mongodb-developer/vercel-ai-memory package.',
   generator: 'v0.app',
   icons: {
     icon: [
