@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, UIMessage } from 'ai'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { MessageList } from '@/components/chat/message-list'
 import { ChatInput } from '@/components/chat/chat-input'
 import { ChatHeader } from '@/components/chat/chat-header'
@@ -59,7 +59,6 @@ function storeSessionId(userId: string, sessionId: string) {
   }
 }
 
-
 // ─── Inner component: owns useChat scoped to the current sessionId ─────────────
 // key={sessionId} on this component forces a fresh useChat whenever session changes
 function ChatSession({
@@ -111,6 +110,9 @@ export function ChatInterface() {
   const [sessionId, setSessionId] = useState<string>('')
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([])
   const [sidebarKey, setSidebarKey] = useState(0)
+  // Mobile sidebar open/close state
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const sidebarRef = useRef<HTMLDivElement>(null)
 
   // Hydrate from localStorage on first client render. This pins both the user
   // and the "current sessionId" so page reloads resume the same thread instead
@@ -138,12 +140,25 @@ export function ChatInterface() {
     })()
   }, [])
 
+  // Close sidebar on outside click (mobile)
+  useEffect(() => {
+    if (!sidebarOpen) return
+    function handleClick(e: MouseEvent) {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        setSidebarOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [sidebarOpen])
+
   const handleNewSession = useCallback(() => {
     const fresh = newSessionId()
     setInitialMessages([])
     setSessionId(fresh)
     storeSessionId(userId, fresh)
     setSidebarKey((k) => k + 1)
+    setSidebarOpen(false)
   }, [userId])
 
   const handleUserChange = useCallback((newUser: string) => {
@@ -153,6 +168,7 @@ export function ChatInterface() {
     const sid = loadOrCreateSessionId(newUser)
     setSessionId(sid)
     setSidebarKey((k) => k + 1)
+    setSidebarOpen(false)
   }, [])
 
   // Fetch stored messages FIRST, then switch to the selected session
@@ -174,10 +190,10 @@ export function ChatInterface() {
       // Change sessionId AFTER messages are loaded — triggers ChatSession remount
       setSessionId(selectedId)
       storeSessionId(userId, selectedId)
+      setSidebarOpen(false)
     },
     [userId]
   )
-
 
   const handleSidebarRefresh = useCallback(() => {
     setSidebarKey((k) => k + 1)
@@ -187,20 +203,49 @@ export function ChatInterface() {
   if (!sessionId) return null
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-dvh bg-background">
       <ChatHeader
         userId={userId}
         sessionId={sessionId}
         onUserChange={handleUserChange}
         onNewSession={handleNewSession}
+        onMenuToggle={() => setSidebarOpen((o) => !o)}
       />
-      <div className="flex flex-1 overflow-hidden">
-        <SessionSidebar
-          key={sidebarKey}
-          userId={userId}
-          activeSessionId={sessionId}
-          onSelectSession={handleSelectSession}
-        />
+
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* ── Mobile backdrop ── */}
+        {sidebarOpen && (
+          <div
+            className="sm:hidden fixed inset-0 z-20 bg-background/60 backdrop-blur-sm"
+            aria-hidden="true"
+          />
+        )}
+
+        {/* ── Sidebar ── */}
+        {/* Desktop: always visible, shrink-0 column */}
+        {/* Mobile: fixed overlay, slides in from left */}
+        <div
+          ref={sidebarRef}
+          className={[
+            // mobile: fixed overlay
+            'fixed sm:relative inset-y-0 left-0 z-30',
+            'sm:z-auto sm:translate-x-0',
+            // animate on mobile
+            'transition-transform duration-200 ease-in-out',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0',
+            // sizing
+            'w-64 sm:w-60 shrink-0',
+          ].join(' ')}
+        >
+          <SessionSidebar
+            key={sidebarKey}
+            userId={userId}
+            activeSessionId={sessionId}
+            onSelectSession={handleSelectSession}
+          />
+        </div>
+
+        {/* ── Chat area ── */}
         <ChatSession
           key={sessionId}
           userId={userId}

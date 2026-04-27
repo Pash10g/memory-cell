@@ -60,7 +60,7 @@ export function SessionSidebar({ userId, activeSessionId, onSelectSession }: Ses
   const grouped = groupByDate(sessions)
 
   return (
-    <aside className="w-60 shrink-0 flex flex-col border-r border-cell-border bg-cell-surface/30 overflow-hidden">
+    <aside className="h-full w-full flex flex-col border-r border-cell-border bg-cell-surface/80 backdrop-blur-sm sm:bg-cell-surface/30 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-cell-border">
         <div className="flex items-center gap-2">

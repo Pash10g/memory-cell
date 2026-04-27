@@ -40,8 +40,8 @@ export function ChatInput({ onSend, onStop, status }: ChatInputProps) {
   }
 
   return (
-    <div className="px-4 pb-4 pt-2">
-      <div className="relative flex items-end gap-2 rounded-2xl border border-cell-border bg-cell-surface px-4 py-3 focus-within:border-cell-accent/50 transition-colors">
+    <div className="px-3 sm:px-4 pb-4 pt-2">
+      <div className="relative flex items-end gap-2 rounded-2xl border border-cell-border bg-cell-surface px-3 sm:px-4 py-2.5 sm:py-3 focus-within:border-cell-accent/50 transition-colors">
         <textarea
           ref={textareaRef}
           value={value}
@@ -57,7 +57,7 @@ export function ChatInput({ onSend, onStop, status }: ChatInputProps) {
           onClick={isStreaming ? onStop : handleSend}
           disabled={!isStreaming && !value.trim()}
           className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all',
+            'flex h-9 w-9 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-xl transition-all',
             isStreaming
               ? 'bg-destructive text-destructive-foreground hover:bg-destructive/80'
               : value.trim()
@@ -74,7 +74,15 @@ export function ChatInput({ onSend, onStop, status }: ChatInputProps) {
         </button>
       </div>
       <p className="text-center text-[10px] text-muted-foreground mt-2 font-mono">
-        MemoryCell remembers across sessions via MongoDB + Voyage AI
+        MemoryCell remembers across sessions via{' '}
+        <a
+          href="https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-cell-accent hover:underline"
+        >
+          @mongodb-developer/vercel-ai-memory
+        </a>
       </p>
     </div>
   )

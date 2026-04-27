@@ -56,7 +56,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       {/* Bubble + trace */}
       <div
         className={cn(
-          'flex flex-col gap-2 max-w-[80%]',
+          'flex flex-col gap-2 max-w-[85%] sm:max-w-[80%]',
           isUser ? 'items-end' : 'items-start'
         )}
       >
