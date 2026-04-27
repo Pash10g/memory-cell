@@ -1,24 +1,5 @@
 {
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "env": {
-    "MONGODB_URI": {
-      "description": "MongoDB Atlas connection string. Get yours at https://cloud.mongodb.com",
-      "required": true
-    },
-    "VOYAGE_API_KEY": {
-      "description": "Voyage AI API key for generating memory embeddings. Get yours at https://dash.voyageai.com/api-keys",
-      "required": true
-    },
-    "AI_GATEWAY_API_KEY": {
-      "description": "Vercel AI Gateway API key for routing LLM requests. Get yours at https://vercel.com/docs/ai-gateway",
-      "required": true
-    },
-    "AI_MODEL": {
-      "description": "AI model name to use (optional). Defaults to google/gemini-3.1-flash-lite-preview",
-      "required": false,
-      "default": "google/gemini-3.1-flash-lite-preview"
-    }
-  }
+  "framework": "nextjs"
 }
