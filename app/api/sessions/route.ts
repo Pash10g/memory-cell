@@ -29,13 +29,22 @@ export async function GET(req: NextRequest) {
     ])
     .toArray()
 
-  // Enrich sessions that had no user message as their first document
+  // Enrich sessions that had no user message as their first document.
+  // Skip internal tool-call / tool-result placeholders when picking a preview.
+  const isToolPlaceholder = (content: unknown) =>
+    typeof content === 'string' &&
+    /^\[tool-(call|result)\b/i.test(content.trim())
+
   const enriched = await Promise.all(
     sessions.map(async (s) => {
       let preview = s.firstUserMsg as string | null
-      if (!preview) {
+      if (!preview || isToolPlaceholder(preview)) {
         const firstUser = await col.findOne(
-          { session_id: s._id, role: 'user' },
+          {
+            session_id: s._id,
+            role: 'user',
+            content: { $not: /^\[tool-(call|result)\b/i },
+          },
           { sort: { created_at: 1 } }
         )
         preview = (firstUser?.content as string) ?? '(no messages)'

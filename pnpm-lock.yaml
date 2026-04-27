@@ -16,7 +16,7 @@ importers:
         version: 3.10.0(react-hook-form@7.71.1(react@19.2.4))
       '@mongodb-developer/vercel-ai-memory':
         specifier: latest
-        version: 0.1.0(ai@6.0.141(zod@3.25.76))(mongodb@6.21.0)(zod@3.25.76)
+        version: 0.2.0(ai@6.0.141(zod@3.25.76))(mongodb@6.21.0)(zod@3.25.76)
       '@radix-ui/react-accordion':
         specifier: 1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -407,8 +407,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@mongodb-developer/vercel-ai-memory@0.1.0':
-    resolution: {integrity: sha512-fJ2Wg9tJaqIPYLBBd00tjLg6WKCWgbzvyMNXoWcgQ+CnOOOcTZfkzBMk7phffZtnxeuZWZObfVaPoNeB/eeLtQ==}
+  '@mongodb-developer/vercel-ai-memory@0.2.0':
+    resolution: {integrity: sha512-92gClRHjS0SmURiHIaHimO2Lf5uLw8NNH3yv4gpy1CqyIDlOlf1bPxQpG+SvEzvzyQ+5S5ESSp7b7LDetX/wTw==}
     peerDependencies:
       ai: ^4.0.0 || ^5.0.0 || ^6.0.0
       mongodb: ^6.0.0
@@ -2058,7 +2058,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@mongodb-developer/vercel-ai-memory@0.1.0(ai@6.0.141(zod@3.25.76))(mongodb@6.21.0)(zod@3.25.76)':
+  '@mongodb-developer/vercel-ai-memory@0.2.0(ai@6.0.141(zod@3.25.76))(mongodb@6.21.0)(zod@3.25.76)':
     dependencies:
       ai: 6.0.141(zod@3.25.76)
       mongodb: 6.21.0
