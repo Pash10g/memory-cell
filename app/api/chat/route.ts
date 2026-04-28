@@ -189,7 +189,9 @@ const cveLookupTool = tool({
 
 const cveStatsTool = tool({
   description: 'Get statistics and overview of the CVE database. Use this to understand the threat landscape.',
-  parameters: z.object({}),
+  parameters: z.object({
+    includeAnomalies: z.boolean().optional().describe('Whether to include anomaly count in stats'),
+  }),
   execute: async () => {
     try {
       const client = await clientPromise
