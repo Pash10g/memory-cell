@@ -69,12 +69,12 @@ Today's date: ${new Date().toISOString().slice(0, 10)}`
 // ── CVE Tools ────────────────────────────────────────────────────────────────
 
 const cveVectorSearchTool = tool({
-  description: 'Search for CVEs semantically similar to a threat description using vector search. Use this to find vulnerabilities related to a described attack pattern, technique, or security concern.',
+  description: 'Search for CVEs semantically similar to a threat description using vector search. Use this to find vulnerabilities related to a described attack pattern, technique, or security concern. Always pass limit=5 unless user specifies more.',
   parameters: z.object({
-    query: z.string(),
-    limit: z.number().int().default(5),
+    query: z.string().describe('The search query describing the threat or vulnerability'),
+    limit: z.number().int().describe('Number of results to return, typically 5'),
   }),
-  execute: async ({ query, limit = 5 }) => {
+  execute: async ({ query, limit }) => {
     try {
       const client = await clientPromise
       const db = client.db(CVE_DB)
@@ -121,19 +121,19 @@ const cveVectorSearchTool = tool({
 })
 
 const cveLookupTool = tool({
-  description: 'Look up specific CVEs by ID or filter by criteria. Use this for exact CVE lookups or browsing by severity.',
+  description: 'Look up specific CVEs by ID or filter by criteria. Use this for exact CVE lookups or browsing by severity. Pass limit=10 unless user specifies.',
   parameters: z.object({
-    cveId: z.string().optional(),
-    limit: z.number().int().default(10),
+    cveId: z.string().describe('CVE ID to search for, or empty string to list all'),
+    limit: z.number().int().describe('Number of results to return, typically 10'),
   }),
-  execute: async ({ cveId, limit = 10 }) => {
+  execute: async ({ cveId, limit }) => {
     try {
       const client = await clientPromise
       const db = client.db(CVE_DB)
       const collection = db.collection(CVE_COLLECTION)
 
       const query: Record<string, unknown> = {}
-      if (cveId) query.cve_id = { $regex: cveId, $options: 'i' }
+      if (cveId && cveId.trim()) query.cve_id = { $regex: cveId, $options: 'i' }
 
       const results = await collection
         .find(query)
@@ -168,7 +168,7 @@ const cveLookupTool = tool({
 const cveStatsTool = tool({
   description: 'Get statistics and overview of the CVE database. Use this to understand the threat landscape.',
   parameters: z.object({
-    _placeholder: z.string().optional(),
+    includeSeverityBreakdown: z.boolean().describe('Whether to include severity breakdown, typically true'),
   }),
   execute: async () => {
     try {
