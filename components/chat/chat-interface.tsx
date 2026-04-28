@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { MessageList } from '@/components/chat/message-list'
 import { ChatInput } from '@/components/chat/chat-input'
 import { ChatHeader } from '@/components/chat/chat-header'
-import { SessionSidebar } from '@/components/chat/session-sidebar'
+import { ThreatSidebar } from '@/components/threat/threat-sidebar'
 
 function newSessionId() {
   return typeof crypto !== 'undefined'
@@ -19,8 +19,8 @@ function newSessionId() {
 // thread is reused across page reloads / remounts. Without this, every reload
 // generates a fresh sessionId and each subsequent user turn ends up in a new
 // sidebar thread — sessions should be grouped by sessionId, not per response.
-const SESSION_KEY_PREFIX = 'memory-cell:currentSessionId:'
-const USER_KEY = 'memory-cell:currentUser'
+const SESSION_KEY_PREFIX = 'threatcell:currentSessionId:'
+const USER_KEY = 'threatcell:currentUser'
 
 function loadStoredUser(): string {
   if (typeof window === 'undefined') return 'default'
@@ -237,8 +237,8 @@ export function ChatInterface() {
             'w-64 sm:w-60 shrink-0',
           ].join(' ')}
         >
-          <SessionSidebar
-            key={sidebarKey}
+          <ThreatSidebar
+            sidebarKey={sidebarKey}
             userId={userId}
             activeSessionId={sessionId}
             onSelectSession={handleSelectSession}

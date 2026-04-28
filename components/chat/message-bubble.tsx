@@ -2,7 +2,7 @@
 
 import { UIMessage, ToolUIPart } from 'ai'
 import { cn } from '@/lib/utils'
-import { BrainCircuit, User } from 'lucide-react'
+import { ShieldAlert, User } from 'lucide-react'
 import { MemoryTrace } from './memory-trace'
 
 interface MessageBubbleProps {
@@ -49,7 +49,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         {isUser ? (
           <User className="w-4 h-4 text-cell-accent" />
         ) : (
-          <BrainCircuit className="w-4 h-4 text-cell-accent" />
+          <ShieldAlert className="w-4 h-4 text-cell-accent" />
         )}
       </div>
 

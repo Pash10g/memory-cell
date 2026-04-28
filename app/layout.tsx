@@ -11,9 +11,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'MemoryCell',
+  title: 'ThreatCell',
   description:
-    'An AI assistant with persistent long-term memory, powered by the @mongodb-developer/vercel-ai-memory package.',
+    'AI-powered cybersecurity assistant with persistent memory and CVE intelligence, powered by MongoDB vector search.',
   generator: 'v0.app',
   icons: {
     icon: [

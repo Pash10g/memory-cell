@@ -48,7 +48,7 @@ export function ChatInput({ onSend, onStop, status }: ChatInputProps) {
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
-          placeholder="Send a message..."
+          placeholder="Describe a threat, ask about CVEs, or analyze vulnerabilities..."
           rows={1}
           className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none leading-relaxed font-sans"
           style={{ maxHeight: '200px' }}
@@ -74,15 +74,8 @@ export function ChatInput({ onSend, onStop, status }: ChatInputProps) {
         </button>
       </div>
       <p className="text-center text-[10px] text-muted-foreground mt-2 font-mono">
-        MemoryCell remembers across sessions via{' '}
-        <a
-          href="https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-cell-accent hover:underline"
-        >
-          @mongodb-developer/vercel-ai-memory
-        </a>
+        ThreatCell: CVE Intelligence + Persistent Memory via{' '}
+        <span className="text-cell-accent">MongoDB Vector Search</span>
       </p>
     </div>
   )

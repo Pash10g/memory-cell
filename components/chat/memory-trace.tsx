@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List, AlertCircle, Clock, Zap, StickyNote } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List, AlertCircle, Clock, Zap, StickyNote, Shield, Bug, Crosshair, FileWarning } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ToolUIPart } from './message-bubble'
 
@@ -14,18 +14,23 @@ const COMMAND_META: Record<string, { icon: React.ElementType; label: string; col
   session_append:       { icon: Clock,     label: 'Saved turn',          color: 'text-sky-400' },
   session_recent:       { icon: List,      label: 'Recent session',      color: 'text-sky-400' },
   // Semantic memory
-  semantic_save:        { icon: Database,  label: 'Saved fact',          color: 'text-emerald-400' },
-  semantic_search:      { icon: Search,    label: 'Searched facts',      color: 'text-amber-400' },
+  semantic_save:        { icon: Database,  label: 'Saved intel',         color: 'text-emerald-400' },
+  semantic_search:      { icon: Search,    label: 'Searched intel',      color: 'text-amber-400' },
   // Procedural memory
-  procedural_save:      { icon: FilePlus,  label: 'Saved procedure',     color: 'text-emerald-400' },
-  procedural_search:    { icon: Search,    label: 'Searched procedures', color: 'text-amber-400' },
+  procedural_save:      { icon: FilePlus,  label: 'Saved playbook',      color: 'text-emerald-400' },
+  procedural_search:    { icon: Search,    label: 'Searched playbooks',  color: 'text-amber-400' },
   // Episodic memory
-  episodic_save:        { icon: BookOpen,  label: 'Saved episode',       color: 'text-purple-400' },
-  episodic_search:      { icon: Search,    label: 'Searched episodes',   color: 'text-amber-400' },
+  episodic_save:        { icon: BookOpen,  label: 'Saved incident',      color: 'text-purple-400' },
+  episodic_search:      { icon: Search,    label: 'Searched incidents',  color: 'text-amber-400' },
   // Scratchpad
-  scratchpad_write:     { icon: StickyNote, label: 'Scratch note',       color: 'text-yellow-400' },
-  scratchpad_read:      { icon: StickyNote, label: 'Read scratch',       color: 'text-yellow-400' },
+  scratchpad_write:     { icon: StickyNote, label: 'Working note',       color: 'text-yellow-400' },
+  scratchpad_read:      { icon: StickyNote, label: 'Read note',          color: 'text-yellow-400' },
   scratchpad_promote:   { icon: Zap,       label: 'Promoted note',       color: 'text-purple-400' },
+  // CVE / Threat Intelligence
+  cve_search:           { icon: Bug,       label: 'CVE search',          color: 'text-rose-400' },
+  cve_vector_search:    { icon: Crosshair, label: 'Threat vector',       color: 'text-rose-400' },
+  threat_analyze:       { icon: Shield,    label: 'Threat analysis',     color: 'text-cyan-400' },
+  vuln_assess:          { icon: FileWarning, label: 'Vuln assessment',   color: 'text-orange-400' },
 }
 
 function getEffectiveInput(part: ToolUIPart): Record<string, unknown> {
@@ -101,7 +106,7 @@ export function MemoryTrace({ toolParts }: MemoryTraceProps) {
           })}
         </span>
         <span className="text-[11px] font-mono text-muted-foreground group-hover:text-foreground transition-colors">
-          {totalOps} memory {totalOps === 1 ? 'op' : 'ops'}
+          {totalOps} intel {totalOps === 1 ? 'op' : 'ops'}
         </span>
       </button>
 

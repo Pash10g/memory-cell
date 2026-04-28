@@ -1,6 +1,6 @@
 'use client'
 
-import { BrainCircuit, Database, RotateCcw, User, Pencil, Check, X, Sun, Moon, Menu } from 'lucide-react'
+import { Shield, Database, RotateCcw, User, Pencil, Check, X, Sun, Moon, Menu, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from 'next-themes'
 
@@ -46,22 +46,17 @@ export function ChatHeader({ userId, sessionId, onUserChange, onNewSession, onMe
         )}
 
         <div className="w-8 h-8 rounded-lg bg-cell-accent/10 border border-cell-accent/30 flex items-center justify-center shrink-0">
-          <BrainCircuit className="w-4 h-4 text-cell-accent" />
+          <ShieldAlert className="w-4 h-4 text-cell-accent" />
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold font-mono text-foreground">
-            MemoryCell
+            ThreatCell
           </p>
           <p className="text-[10px] text-muted-foreground font-mono truncate">
-            Powered by{' '}
-            <a
-              href="https://www.npmjs.com/package/@mongodb-developer/vercel-ai-memory"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-cell-accent hover:underline"
-            >
-              @mongodb-developer/vercel-ai-memory
-            </a>
+            CVE Intelligence + Memory{' '}
+            <span className="text-cell-accent">
+              MongoDB Vector Search
+            </span>
           </p>
         </div>
       </div>
