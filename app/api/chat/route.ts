@@ -71,12 +71,10 @@ Today's date: ${new Date().toISOString().slice(0, 10)}`
 const cveVectorSearchTool = tool({
   description: 'Search for CVEs semantically similar to a threat description using vector search. Use this to find vulnerabilities related to a described attack pattern, technique, or security concern.',
   parameters: z.object({
-    query: z.string().describe('Natural language description of the threat, attack pattern, or vulnerability to search for'),
-    limit: z.number().int().min(1).max(20).optional().describe('Maximum number of results to return (1-20)'),
-    severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO']).optional().describe('Filter by severity level'),
-    includeAnomalies: z.boolean().optional().describe('Include anomalous CVEs in results'),
-  }).strict(),
-  execute: async ({ query, limit = 5, severity, includeAnomalies }) => {
+    query: z.string(),
+    limit: z.number().int().default(5),
+  }),
+  execute: async ({ query, limit = 5 }) => {
     try {
       const client = await clientPromise
       const db = client.db(CVE_DB)
@@ -93,7 +91,7 @@ const cveVectorSearchTool = tool({
             index: VECTOR_INDEX,
             path: 'embedding',
             queryVector,
-            numCandidates: (limit) * 10,
+            numCandidates: limit * 10,
             limit: limit,
           },
         },
@@ -103,15 +101,6 @@ const cveVectorSearchTool = tool({
           },
         },
       ]
-
-      // Add filters
-      const matchStage: Record<string, unknown> = {}
-      if (severity) matchStage.severity = severity
-      if (!includeAnomalies) matchStage.is_anomaly = false
-      
-      if (Object.keys(matchStage).length > 0) {
-        pipeline.push({ $match: matchStage })
-      }
 
       const results = await collection.aggregate(pipeline).toArray()
 
@@ -134,11 +123,10 @@ const cveVectorSearchTool = tool({
 const cveLookupTool = tool({
   description: 'Look up specific CVEs by ID or filter by criteria. Use this for exact CVE lookups or browsing by severity.',
   parameters: z.object({
-    cveId: z.string().optional().describe('Specific CVE ID to look up (e.g., CVE-2021-44228)'),
-    severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO']).optional().describe('Filter by severity level'),
-    limit: z.number().int().min(1).max(50).optional().describe('Maximum number of results (1-50)'),
-  }).strict(),
-  execute: async ({ cveId, severity, limit = 10 }) => {
+    cveId: z.string().optional(),
+    limit: z.number().int().default(10),
+  }),
+  execute: async ({ cveId, limit = 10 }) => {
     try {
       const client = await clientPromise
       const db = client.db(CVE_DB)
@@ -146,7 +134,6 @@ const cveLookupTool = tool({
 
       const query: Record<string, unknown> = {}
       if (cveId) query.cve_id = { $regex: cveId, $options: 'i' }
-      if (severity) query.severity = severity
 
       const results = await collection
         .find(query)
@@ -181,8 +168,8 @@ const cveLookupTool = tool({
 const cveStatsTool = tool({
   description: 'Get statistics and overview of the CVE database. Use this to understand the threat landscape.',
   parameters: z.object({
-    metric: z.string().optional().describe('Optional metric name to focus on'),
-  }).strict(),
+    _placeholder: z.string().optional(),
+  }),
   execute: async () => {
     try {
       const client = await clientPromise
