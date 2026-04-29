@@ -24,7 +24,12 @@ const USER_KEY = 'memory-cell:currentUser'
 
 function loadStoredUser(): string {
   if (typeof window === 'undefined') return 'default'
-  return window.localStorage.getItem(USER_KEY) || 'default'
+  const stored = window.localStorage.getItem(USER_KEY)
+  if (stored) return stored
+  // First-time visitor — assign a random default user ID
+  const random = 'user' + Math.floor(100000 + Math.random() * 900000)
+  try { window.localStorage.setItem(USER_KEY, random) } catch { /* ignore */ }
+  return random
 }
 
 function storeUser(userId: string) {
