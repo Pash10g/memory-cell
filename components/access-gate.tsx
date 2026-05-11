@@ -1,13 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle, KeyRound, ExternalLink } from 'lucide-react'
+import { ChatInterface } from '@/components/chat/chat-interface'
 
 interface AccessGateProps {
   onAccessGranted: () => void
+}
+
+export function AccessGateWrapper() {
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const access = sessionStorage.getItem('memory-cell-access')
+    setHasAccess(access === 'granted')
+  }, [])
+
+  if (hasAccess === null) return null
+  if (hasAccess) return <ChatInterface />
+  return <AccessGate onAccessGranted={() => setHasAccess(true)} />
 }
 
 export function AccessGate({ onAccessGranted }: AccessGateProps) {
