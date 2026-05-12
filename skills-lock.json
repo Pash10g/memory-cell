@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "edd": {
+      "source": "mongodb-developer/edd-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "2f096f7cadb81aff9632127fbbdbcdeff72dffb8be393aefc01bb2e455fbf381"
+    }
+  }
+}
