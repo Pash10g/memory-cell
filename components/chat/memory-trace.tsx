@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Database, Search, BookOpen, FilePlus, List, AlertCircle, Clock, Zap, StickyNote } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ToolUIPart } from './message-bubble'
 
 interface MemoryTraceProps {
@@ -65,6 +66,22 @@ function outputSummary(part: ToolUIPart): string {
   return String(output)
 }
 
+function fullOutput(part: ToolUIPart): string {
+  if (part.state === 'output-error') {
+    return part.errorText ?? 'Error'
+  }
+  if (part.state !== 'output-available') return 'Running…'
+  const output = part.output
+  if (!output) return '—'
+  if (typeof output === 'string') return output.trim() || '—'
+  if (typeof output === 'object') {
+    const o = output as Record<string, unknown>
+    if ('output' in o && typeof o.output === 'string') return o.output.trim()
+    return JSON.stringify(output, null, 2)
+  }
+  return String(output)
+}
+
 export function MemoryTrace({ toolParts }: MemoryTraceProps) {
   const [open, setOpen] = useState(false)
 
@@ -114,26 +131,43 @@ export function MemoryTrace({ toolParts }: MemoryTraceProps) {
             const isError = part.state === 'output-error'
             const isDone = part.state === 'output-available' || isError
             const summary = isDone ? outputSummary(part) : 'running…'
+            const full = fullOutput(part)
 
             return (
-              <div
-                key={part.toolCallId ?? i}
-                className="flex items-center justify-between gap-4 py-1"
-              >
-                <span className={cn(
-                  'flex items-center gap-1.5 text-[11px] font-mono shrink-0',
-                  isError ? 'text-rose-400' : meta.color
-                )}>
-                  {isError ? <AlertCircle className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
-                  {meta.label}
-                </span>
-                <span className={cn(
-                  'text-[11px] font-mono text-right truncate max-w-[220px]',
-                  isError ? 'text-rose-400/70' : 'text-muted-foreground'
-                )}>
-                  {summary}
-                </span>
-              </div>
+              <Tooltip key={part.toolCallId ?? i}>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-between gap-4 py-1 cursor-default">
+                    <span className={cn(
+                      'flex items-center gap-1.5 text-[11px] font-mono shrink-0',
+                      isError ? 'text-rose-400' : meta.color
+                    )}>
+                      {isError ? <AlertCircle className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
+                      {meta.label}
+                    </span>
+                    <span className={cn(
+                      'text-[11px] font-mono text-right truncate max-w-[220px]',
+                      isError ? 'text-rose-400/70' : 'text-muted-foreground'
+                    )}>
+                      {summary}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  sideOffset={12}
+                  className="max-w-xs sm:max-w-sm bg-cell-surface border border-cell-border text-foreground shadow-lg p-0 overflow-hidden"
+                >
+                  <div className="px-3 py-2 border-b border-cell-border flex items-center gap-1.5">
+                    <Icon className={cn('w-3 h-3 shrink-0', isError ? 'text-rose-400' : meta.color)} />
+                    <span className={cn('text-[11px] font-mono font-semibold', isError ? 'text-rose-400' : meta.color)}>
+                      {meta.label}
+                    </span>
+                  </div>
+                  <pre className="px-3 py-2 text-[11px] font-mono text-muted-foreground whitespace-pre-wrap break-words leading-relaxed max-h-64 overflow-y-auto">
+                    {full}
+                  </pre>
+                </TooltipContent>
+              </Tooltip>
             )
           })}
         </div>
